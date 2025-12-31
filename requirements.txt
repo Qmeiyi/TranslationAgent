@@ -1,6 +1,7 @@
 langchain
 langchain_core
 langchain_openai
+langgraph
 pydantic
 python-dotenv
 json5

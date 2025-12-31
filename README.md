@@ -10,13 +10,17 @@ project_lotm_translation/
 │   ├── raw/                  # 爬虫原始数据
 │   ├── processed/            # 清洗后的数据
 │   ├── glossary/             # 术语表
+│   ├── runs/                 # LangGraph 运行产物 (checkpoint/outputs)
 │   └── output/               # 最终翻译结果
 ├── src/
+│   ├── main.py               # 统一 CLI 入口
 │   ├── 1_spider.py           # 爬虫
 │   ├── 2_cleaner.py          # 清洗规则
 │   ├── 3_term_extractor.py   # Agent 1: 术语提取
 │   ├── 4_translator_tear.py  # Agent 2: TEaR 翻译循环 (核心)
 │   └── 5_baseline.py         # 基线翻译 (用于对比)
+│   ├── utils/                # 配置与环境变量
+│   └── workflow/             # LangGraph 工作流 & checkpoint
 ├── templates/
 │   └── hitl_review.csv       # 人机协作表格模板
 ├── requirements.txt          # 依赖库
@@ -53,7 +57,28 @@ project_lotm_translation/
 pip install -r requirements.txt
 ```
 
+## 环境变量配置
+
+模型 Key 必须通过环境变量提供（代码中不再允许硬编码）：
+
+- `SILICONFLOW_API_KEY` 或 `OPENAI_API_KEY`
+- 可选：`LLM_MODEL`、`SILICONFLOW_BASE_URL`、`OPENAI_BASE_URL`
+
+> 使用 `--dry_run` 可在无网络/无 Key 环境下跑通流程与 I/O。
+
 ## 运行流程
+
+### 统一入口（推荐）
+
+```bash
+python src/main.py --input_path data/processed/诡秘之主_final.jsonl --chapters 1-2
+```
+
+支持断点恢复：
+
+```bash
+python src/main.py --resume <run_id>
+```
 
 ### 1. 数据准备
 
@@ -91,6 +116,12 @@ python src/4_translator_tear.py
 
 - **基线翻译结果**: `data/output/诡秘之主_baseline_result.jsonl`
 - **TEaR 翻译结果**: `data/output/诡秘之主_tear_result.jsonl`
+- **Workflow 运行目录**: `data/runs/<run_id>/`
+  - `final/book_merged_zh.txt`
+  - `final/chapters/chapter_<id>_zh.txt`
+  - `states/state_<node>.json`
+  - `chunks/<chapter_id>/<chunk_id>.json`
+  - `logs/run.log`
 
 ## 技术栈
 
@@ -154,7 +185,7 @@ flowchart TD
 
 ## 注意事项
 
-1. 请确保已替换代码中的 API Key
+1. 请确保已设置环境变量 `SILICONFLOW_API_KEY` 或 `OPENAI_API_KEY`
 2. 翻译过程可能需要较长时间，请耐心等待
 3. 建议先在小范围文本上测试
 4. 术语表可以根据需要手动扩展

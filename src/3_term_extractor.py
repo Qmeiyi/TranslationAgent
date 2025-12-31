@@ -5,129 +5,130 @@
 功能：识别并规范化小说中的术语、实体和文化负载词
 """
 
+from __future__ import annotations
+
 import json
-import os
-from typing import List, Optional
-from pydantic import BaseModel, Field
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
+from pathlib import Path
+from typing import Iterable, List, Optional, Union
+
 from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from pydantic import BaseModel, Field
 
-# --- 1. 定义数据结构 ---
-class TermEntry(BaseModel):
-    """术语条目数据结构"""
-    term: str = Field(description="原文术语")
-    category: str = Field(description="类别: Person, Location, Org, Concept, Item, Currency")
-    definition: str = Field(description="结合全书上下文的深度定义")
-    suggested_translation: str = Field(description="建议的英文译名 (需保持全书一致)")
-    context_clue: Optional[str] = Field(description="该术语首次出现或最关键的原文片段引用", default=None)
+from utils.config import get_llm
 
-class KnowledgeGraph(BaseModel):
-    """知识库数据结构"""
-    world_summary: str = Field(description="对前10章世界观、力量体系的简要总结（200字以内）")
-    terms: List[TermEntry]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-# --- 2. 初始化模型 --- 
-def init_llm():
-    """初始化LLM模型"""
-    return ChatOpenAI(
-        model="deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
-        api_key="sk-cautwxmuhdpxhtuilctlfpecaoxpzhagpzfzmkdxgrywjpum", 
-        base_url="https://api.siliconflow.cn/v1/",
-        temperature=0.1,
-        max_tokens=8000
+
+class GlossaryEntry(BaseModel):
+    term: str = Field(description="源术语")
+    type: str = Field(description="类型，例如 NE:person, NE:location, NE:org")
+    final: str = Field(description="最终译名")
+    aliases: List[str] = Field(default_factory=list)
+    senses: List[str] = Field(default_factory=list)
+
+
+class Glossary(BaseModel):
+    version: int = Field(default=1, description="术语表版本")
+    entries: List[GlossaryEntry]
+    world_summary: Optional[str] = Field(default=None, description="世界观摘要")
+
+
+def _stringify_chapters(chapters: Iterable[dict]) -> str:
+    parts: List[str] = []
+    for chapter in chapters:
+        chapter_id = chapter.get("chapter_id") or chapter.get("chapter_index") or "?"
+        title = chapter.get("title") or ""
+        text = chapter.get("text") or ""
+        parts.append(f"[Chapter {chapter_id} {title}]\n{text}")
+    return "\n\n".join(parts)
+
+
+def load_full_text(input_path: Path) -> str:
+    if input_path.suffix.lower() == ".jsonl":
+        chapters = []
+        with input_path.open("r", encoding="utf-8") as f:
+            for line in f:
+                data = json.loads(line)
+                chapters.append(data)
+        return _stringify_chapters(chapters)
+
+    return input_path.read_text(encoding="utf-8")
+
+
+def extract_terms(
+    chapters_or_text: Union[str, Path, Iterable[dict]],
+    output_path: Optional[Path] = None,
+    dry_run: bool = False,
+    max_chars: int = 60000,
+) -> dict:
+    if isinstance(chapters_or_text, Path):
+        full_text = load_full_text(chapters_or_text)
+    elif isinstance(chapters_or_text, str):
+        full_text = chapters_or_text
+    else:
+        full_text = _stringify_chapters(chapters_or_text)
+
+    if max_chars and len(full_text) > max_chars:
+        full_text = full_text[:max_chars]
+
+    if dry_run:
+        glossary = {"version": 1, "entries": [], "world_summary": ""}
+        if output_path:
+            output_path.write_text(
+                json.dumps(glossary, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+        return glossary
+
+    llm = get_llm(temperature=0.1, max_tokens=4000)
+    parser = JsonOutputParser(pydantic_object=Glossary)
+
+    system_prompt = (
+        "你是一位资深的奇幻文学翻译总监，熟悉《诡秘之主》世界观。"
+        "请从文本中提取核心术语，返回 JSON 格式术语表。"
     )
 
-# --- 3. 加载文本 --- 
-def load_full_text(filepath: str) -> str:
-    """
-    加载完整文本用于术语提取
-    
-    Args:
-        filepath: 文本文件路径
-        
-    Returns:
-        拼接好的完整文本
-    """
-    full_text = ""
-    print("📚 正在加载全量文本到内存...")
-    with open(filepath, "r", encoding="utf-8") as f:
-        for line in f:
-            data = json.loads(line)
-            # 拼接格式： [第X章 标题] 
-            full_text += f"\n\n[第{data['chapter_index']}章 {data['title']}]\n{data['text']}"
-            full_text += f"\n\n[第{data['chapter_index']}章 {data['title']}]\n{data['text']}"
-    
-    token_est = len(full_text) 
-    print(f"✅ 加载完成！总字符数: {len(full_text)} (预估 Token: {token_est // 1.5:.0f})")
-    print(f"   此长度完全在 DeepSeek 128K (约 12.8万 Token) 覆盖范围内。")
-    return full_text
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system_prompt),
+            (
+                "user",
+                "这是小说内容片段。请输出术语表 JSON：\n\n{full_text}\n\n{format_instructions}",
+            ),
+        ]
+    )
 
-# --- 4. 主程序 --- 
-def main():
-    """
-    主函数：执行术语提取流程
-    """
-    # 配置路径
-    input_file = "../data/processed/诡秘之主_final.jsonl"
-    output_file = "../data/glossary/project_knowledge_base.json"
-    
-    print("🔍 启动术语提取Agent...")
-    
-    # 创建输出目录
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    
-    # 1. 初始化模型和解析器
-    llm = init_llm()
-    parser = JsonOutputParser(pydantic_object=KnowledgeGraph)
-    
-    # 2. 设计提示词
-    system_prompt = """
-    你是一位资深的奇幻文学翻译总监。你拥有过目不忘的能力，已阅读了《诡秘之主》的前10章全文。
-    你的任务是构建一份**“核心术语与世界观指南”**，以确保后续翻译的统一性。
-    
-    请利用你对全书的理解：
-    1. **去重与合并**：同一个实体（如“周明瑞”和“克莱恩”）如果是指向同一人，请在定义中说明，但保留主要称呼作为术语。
-    2. **深度理解**：对于“非凡者”、“魔药”等核心设定，不要只看字面意思，要结合上下文总结其在本书中的特殊含义。
-    3. **英文命名**：对于人名地名，参考维多利亚时代风格（Victorian Style）；对于专有名词，参考克苏鲁神话（Cthulhu Mythos）风格。
-    
-    请注意：输出必须严格遵循 JSON 格式，不要包含任何额外的分析文本。
-    """
-    
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        ("user", "这是小说的前 10 章完整内容（共约 2 万字）。请分析并提取核心知识库：\n\n{full_text}\n\n{format_instructions}")
-    ])
-    
     chain = prompt | llm | parser
-    
-    # 3. 准备长文本
-    full_context = load_full_text(input_file)
-    
-    # 4. 调用大模型
-    print("\n🚀 正在发送请求给 DeepSeek (这可能需要 30-60 秒)...")
-    try:
-        result = chain.invoke({
-            "full_text": full_context,
-            "format_instructions": parser.get_format_instructions()
-        })
-        
-        # 5. 结果展示与保存
-        print("\n✨ 世界观总结:")
-        print(result['world_summary'])
-        print(f"\n✨ 提取术语数量: {len(result['terms'])}")
-        
-        # 打印前几个看看
-        for term in result['terms'][:5]:
-            print(f"   - {term['term']} ({term['suggested_translation']}): {term['definition']}")
+    glossary = chain.invoke(
+        {
+            "full_text": full_text,
+            "format_instructions": parser.get_format_instructions(),
+        }
+    )
 
-        # 保存为最终知识库
-        with open(output_file, "w", encoding="utf-8") as f:
-            json.dump(result, f, ensure_ascii=False, indent=2)
-            print(f"\n💾 知识库已保存至 {output_file}")
-            
-    except Exception as e:
-        print(f"❌ 发生错误: {e}")
+    if "version" not in glossary:
+        glossary["version"] = 1
+
+    if output_path:
+        output_path.write_text(
+            json.dumps(glossary, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+
+    return glossary
+
+
+def main() -> None:
+    input_file = PROJECT_ROOT / "data" / "processed" / "诡秘之主_final.jsonl"
+    output_file = PROJECT_ROOT / "data" / "glossary" / "project_knowledge_base.json"
+
+    print("🔍 启动术语提取Agent...")
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    glossary = extract_terms(input_file, output_path=output_file)
+
+    print(f"✨ 提取术语数量: {len(glossary.get('entries', []))}")
+    print(f"💾 知识库已保存至 {output_file}")
+
 
 if __name__ == "__main__":
     main()

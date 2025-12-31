@@ -2,96 +2,101 @@
 # -*- coding: utf-8 -*-
 """
 基线翻译脚本 (Baseline Translator)
-功能：不挂载术语表，不使用 TEaR，直接用 gpt-3.5 或 deepseek-chat 进行单次翻译
-用于生成“差生”结果，衬托 TEaR 翻译的“优等生”表现
+功能：不挂载术语表，不使用 TEaR，直接进行单次翻译
 """
 
+from __future__ import annotations
+
 import json
-import os
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
+import time
+from pathlib import Path
+from typing import Any, Dict, Optional
+
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 
-# --- 📁 配置路径 ---
-INPUT_FILE = "../data/processed/诡秘之主_final.jsonl"
-OUTPUT_FILE = "../data/output/诡秘之主_baseline_result.jsonl"
+from utils.config import get_llm, get_llm_settings
 
-# --- 🤖 初始化模型 ---
-def init_baseline_llm():
-    """
-    初始化基线翻译模型
-    
-    Returns:
-        初始化后的LLM实例
-    """
-    return ChatOpenAI(
-        model="deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
-        api_key="sk-cautwxmuhdpxhtuilctlfpecaoxpzhagpzfzmkdxgrywjpum", 
-        base_url="https://api.siliconflow.cn/v1/",
-        temperature=0.1 # 翻译任务需要低温度，保持严谨
-    )
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_INPUT_FILE = PROJECT_ROOT / "data" / "processed" / "诡秘之主_final.jsonl"
+DEFAULT_OUTPUT_FILE = PROJECT_ROOT / "data" / "output" / "诡秘之主_baseline_result.jsonl"
 
-# --- 🎭 基线翻译提示词 ---
-baseline_prompt = ChatPromptTemplate.from_messages([
-    ("system", """
-    你是一位中英翻译专家。请将下面的中文小说翻译成英文。
-    
-    风格要求：
-    - 保持原文意思准确
-    - 使用流畅的英文表达
-    - 无需特别的风格要求
-    """),
-    ("user", "【章节标题】: {title}\n\n【原文内容】:\n{text}\n\n请直接输出英文翻译，不要包含任何解释。")
-])
 
-# --- ⛓️ 构建基线翻译 Chain ---
-llm = init_baseline_llm()
-baseline_chain = baseline_prompt | llm | StrOutputParser()
+BASELINE_PROMPT = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """
+你是一位中英翻译专家。请将下面的中文小说翻译成英文。
 
-# --- 🚀 主程序 ---
-def main():
-    """
-    主函数：执行基线翻译
-    """
-    print("📝 启动基线翻译 (无术语表，无 TEaR)...")
-    
-    # 创建输出目录
-    os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
-    
-    processed_count = 0
-    with open(INPUT_FILE, 'r', encoding='utf-8') as fin, \
-         open(OUTPUT_FILE, 'w', encoding='utf-8') as fout:
-        
+风格要求：
+- 保持原文意思准确
+- 使用流畅的英文表达
+- 无需特别风格
+""",
+        ),
+        (
+            "user",
+            "【章节标题】: {title}\n\n【原文内容】:\n{text}\n\n请直接输出英文翻译。",
+        ),
+    ]
+)
+
+
+def baseline_translate_chunk(
+    text: str,
+    title: Optional[str] = None,
+    dry_run: bool = False,
+) -> Dict[str, Any]:
+    if dry_run:
+        return {
+            "baseline_translation": f"[BASELINE] {text[:200]}",
+            "meta": {"model": "dry_run", "time_sec": 0.0},
+        }
+
+    llm = get_llm(temperature=0.1)
+    chain = BASELINE_PROMPT | llm | StrOutputParser()
+
+    start_time = time.time()
+    translation = chain.invoke({"title": title or "", "text": text})
+    elapsed = time.time() - start_time
+
+    try:
+        model_name = get_llm_settings().model
+    except RuntimeError:
+        model_name = "unknown"
+
+    return {
+        "baseline_translation": translation,
+        "meta": {"model": model_name, "time_sec": round(elapsed, 2)},
+    }
+
+
+def main(
+    input_file: Path = DEFAULT_INPUT_FILE,
+    output_file: Path = DEFAULT_OUTPUT_FILE,
+) -> None:
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+
+    with input_file.open("r", encoding="utf-8") as fin, output_file.open(
+        "w", encoding="utf-8"
+    ) as fout:
         for line in fin:
             chapter = json.loads(line)
-            title = chapter['title']
-            text = chapter['text']
-            
-            print(f"⏳ 正在翻译章节: {title} ...")
-            
-            # 直接调用模型进行单次翻译（无术语表，无TEaR循环）
-            baseline_translation = baseline_chain.invoke({
+            title = chapter.get("title", "")
+            text = chapter.get("text", "")
+
+            result = baseline_translate_chunk(text=text, title=title)
+
+            payload = {
+                "chapter_index": chapter.get("chapter_index"),
                 "title": title,
-                "text": text
-            })
-            
-            # 保存结果
-            result = {
-                "chapter_index": chapter['chapter_index'],
-                "title": title,
-                "baseline_translation": baseline_translation
+                "baseline_translation": result["baseline_translation"],
             }
-            
-            fout.write(json.dumps(result, ensure_ascii=False) + "\n")
-            fout.flush()  # 实时保存
-            
-            processed_count += 1
-            print(f"✅ 完成章节: {title}")
-            print("-" * 50)
-    
-    print(f"📊 基线翻译完成！共处理 {processed_count} 章。")
-    print(f"📁 结果已保存到: {OUTPUT_FILE}")
-    print("💡 提示：此基线翻译用于与 TEaR 翻译结果进行对比分析")
+
+            fout.write(json.dumps(payload, ensure_ascii=False) + "\n")
+            fout.flush()
+
 
 if __name__ == "__main__":
     main()
