@@ -1,0 +1,11 @@
+ID,新发现术语 (Detected Term),类别 (Category),机器建议 (AI Suggestion),人工确认/修改 (Human Verify),备注 (Notes)
+1,廷根市,Location,Tingorn,Tingen,修正拼写错误
+2,封印物,Item,Sealed Artifact,Sealed Artifact,确认无误
+3,罗塞尔大帝,Person,Emperor Russell,Emperor Roselle,官方译名修正
+4,值夜者,Org,Night Watch,Nighthawks,风格化译名修正
+5,非凡者,Concept,Extraordinary Person,Beyonder,专有名词修正
+6,魔药,Item,Magic Potion,Potion,简化译名
+7,赫密斯文,Language,Hermes Script,Hermetic Script,标准译名
+8,鲁恩王国,Location,Ruen Kingdom,Ruen Kingdom,确认无误
+9,蒸汽与机械之神,Deity,God of Steam and Machinery,God of Steam and Machinery,确认无误
+10,黑夜女神,Deity,Night Goddess,Night Goddess,确认无误
