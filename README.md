@@ -32,14 +32,17 @@ project_lotm_translation/
 ### 1. 术语提取 Agent (Agent 1)
 
 - 智能识别小说中的人名、地名、机构名、概念等术语
+- 多类别术语提取：支持NE（命名实体）、domain_term（领域术语）、slang（俚语）、culture_loaded（文化负载词）等7种类型
 - 生成规范化的术语表，确保全书翻译一致性
 - 结合上下文深度定义术语含义
+- **冲突解决与版本化**：自动处理术语冲突，支持上下文相似度判断，版本化存储支持历史追溯
 
 ### 2. TEaR 翻译循环 (Agent 2)
 
-- **T**ranslate: 生成初稿
+- **T**ranslate: 生成初稿（集成Glossary Injection，强制使用术语表）
 - **E**valuate: 回译验证 + 自我审校
 - **R**efine: 根据审校意见优化译文
+- **术语一致性保障**：Post-check机制检查术语使用，自动纠正违规（high/medium严重度）
 
 ### 3. 基线翻译
 
@@ -50,6 +53,13 @@ project_lotm_translation/
 
 - 提供结构化的术语审核表格
 - 支持人工修正机器生成的术语建议
+
+### 5. 术语一致性管理系统
+
+- **动态冲突解决**：基于上下文相似度（Jaccard相似度）自动合并或拆分sense
+- **分层处理策略**：NE术语强制唯一，非NE术语支持多义
+- **版本化存储**：每次更新自动递增版本号（`glossary_v{version}.json`）
+- **双重一致性保障**：Prompt注入（主动）+ Post-check（被动）+ 自动纠正
 
 ## 安装依赖
 
@@ -125,10 +135,11 @@ python src/4_translator_tear.py
 
 ## 技术栈
 
-- **LangChain**: 用于构建 Agent 链
+- **LangChain/LangGraph**: 用于构建 Agent 链和工作流
 - **OpenAI API**: 调用 LLM 模型
 - **DeepSeek**: 主要翻译模型
-- **Pydantic**: 数据结构定义
+- **Pydantic**: 数据结构定义，确保LLM输出结构化
+- **GlossaryStore**: 术语表动态管理、冲突解决、版本化（`src/glossary/store.py`）
 
 ## 翻译质量评估
 
