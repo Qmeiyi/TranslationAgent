@@ -152,19 +152,71 @@ def _default_segmenter(
 
 
 def _normalize_glossary(glossary: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    规范化glossary格式，统一类型命名（C同学增强）
+    """
     if "entries" in glossary:
-        return glossary
+        # 规范化现有entries的type字段
+        normalized_entries = []
+        type_mapping = {
+            "Person": "NE:person",
+            "Location": "NE:location",
+            "Org": "NE:org",
+            "Deity": "NE:deity",
+            "Language": "NE:language",
+            "Identity": "NE:identity",
+            "Concept": "domain_term",  # 根据上下文，Concept通常是领域术语
+            "Item": "domain_term",
+            "Currency": "domain_term",
+        }
+        
+        for entry in glossary.get("entries", []):
+            entry_copy = dict(entry)
+            old_type = entry.get("type", "")
+            # 如果type不在标准格式中，尝试映射
+            if old_type and not old_type.startswith("NE:") and old_type not in ["slang", "domain_term", "culture_loaded"]:
+                entry_copy["type"] = type_mapping.get(old_type, old_type)
+            normalized_entries.append(entry_copy)
+        
+        return {
+            "version": glossary.get("version", 1),
+            "entries": normalized_entries,
+            "world_summary": glossary.get("world_summary"),
+        }
 
     if "terms" in glossary:
         entries = []
+        type_mapping = {
+            "Person": "NE:person",
+            "Location": "NE:location",
+            "Org": "NE:org",
+            "Deity": "NE:deity",
+            "Language": "NE:language",
+            "Identity": "NE:identity",
+            "Concept": "domain_term",
+            "Item": "domain_term",
+            "Currency": "domain_term",
+        }
+        
         for term in glossary.get("terms", []):
+            category = term.get("category", "")
+            mapped_type = type_mapping.get(category, category)
+            
             entries.append(
                 {
                     "term": term.get("term"),
-                    "type": term.get("category"),
+                    "type": mapped_type,
                     "final": term.get("suggested_translation"),
                     "aliases": [],
                     "senses": [],
+                    "candidates": [
+                        {
+                            "translation": term.get("suggested_translation", ""),
+                            "score": 1.0,
+                            "source": "legacy"
+                        }
+                    ] if term.get("suggested_translation") else [],
+                    "evidence_span": term.get("definition", ""),
                 }
             )
         normalized = {

@@ -371,17 +371,58 @@ class GlossaryStore:
         else:
             return self._merge_similar_translations(existing_entry, new_occurrences)
 
+    def _compute_similarity(self, sig1: str, sig2: str) -> float:
+        """计算两个上下文签名的相似度（0-1）"""
+        if not sig1 or not sig2:
+            return 0.0
+        words1 = set(sig1.split("|"))
+        words2 = set(sig2.split("|"))
+        if not words1 or not words2:
+            return 0.0
+        intersection = words1 & words2
+        union = words1 | words2
+        return len(intersection) / len(union) if union else 0.0
+
     def get_relevant_terms(
         self, text: str, max_terms: int = 20
     ) -> List[Dict[str, Any]]:
-        """根据文本检索相关术语（用于翻译时注入）"""
+        """
+        根据文本检索相关术语（用于翻译时注入）
+        
+        C同学增强：如果术语有多个sense，根据当前文本上下文选择最匹配的sense
+        """
         text_lower = text.lower()
         relevant = []
+        text_sig = self._compute_context_signature(text) if text else ""
 
         for entry in self.glossary.get("entries", []):
             term = entry.get("term", "")
             if term in text or term.lower() in text_lower:
-                relevant.append(entry)
+                # 如果术语有多个sense，选择最匹配的sense
+                if entry.get("senses") and len(entry["senses"]) > 0:
+                    best_sense = None
+                    best_similarity = 0.0
+                    
+                    for sense in entry["senses"]:
+                        sense_sig = sense.get("context_signature", "")
+                        if sense_sig:
+                            similarity = self._compute_similarity(text_sig, sense_sig)
+                            if similarity > best_similarity:
+                                best_similarity = similarity
+                                best_sense = sense
+                    
+                    # 如果找到匹配的sense（相似度>0.3），使用sense的final
+                    if best_sense and best_similarity > 0.3:
+                        entry_copy = entry.copy()
+                        entry_copy["final"] = best_sense.get("final", entry.get("final", ""))
+                        entry_copy["_selected_sense"] = best_sense.get("sense_id", "")
+                        relevant.append(entry_copy)
+                    else:
+                        # 没有匹配的sense，使用主entry的final
+                        relevant.append(entry)
+                else:
+                    # 没有sense，直接使用
+                    relevant.append(entry)
 
         # 按类型和重要性排序
         ne_terms = [e for e in relevant if e.get("type", "").startswith("NE:")]
@@ -395,6 +436,8 @@ class GlossaryStore:
         """
         检查翻译是否违反术语一致性
         
+        C同学增强：考虑sense选择，如果选择了特定sense，检查是否使用了sense的final
+        
         Returns:
             违规列表，每个违规包含term, expected, found, severity等
         """
@@ -403,7 +446,9 @@ class GlossaryStore:
 
         for entry in relevant_terms:
             term = entry.get("term", "")
+            # 如果选择了sense，使用sense的final；否则使用主entry的final
             expected = entry.get("final", "")
+            selected_sense = entry.get("_selected_sense", "")
 
             if not expected or term not in original_text:
                 continue
@@ -412,6 +457,15 @@ class GlossaryStore:
             if expected.lower() not in translated_text.lower():
                 # 检查是否有其他候选翻译被使用
                 candidates = [c["translation"] for c in entry.get("candidates", [])]
+                # 也检查sense的候选
+                if selected_sense:
+                    for sense in entry.get("senses", []):
+                        if sense.get("sense_id") == selected_sense:
+                            sense_final = sense.get("final", "")
+                            if sense_final:
+                                candidates.append(sense_final)
+                            break
+                
                 found_any = any(cand.lower() in translated_text.lower() for cand in candidates if cand)
 
                 if not found_any:
@@ -422,6 +476,7 @@ class GlossaryStore:
                             "found": "NOT_FOUND",
                             "severity": "high" if entry.get("type", "").startswith("NE:") else "medium",
                             "type": entry.get("type"),
+                            "sense_id": selected_sense if selected_sense else None,
                         }
                     )
                 else:
@@ -433,13 +488,18 @@ class GlossaryStore:
                             "found": "WRONG_CANDIDATE",
                             "severity": "low",
                             "type": entry.get("type"),
+                            "sense_id": selected_sense if selected_sense else None,
                         }
                     )
 
         return violations
 
     def format_for_prompt(self, terms: Optional[List[Dict[str, Any]]] = None) -> str:
-        """格式化术语表用于注入到翻译prompt"""
+        """
+        格式化术语表用于注入到翻译prompt
+        
+        C同学增强：如果术语有选择的sense，在提示中说明
+        """
         if terms is None:
             terms = self.glossary.get("entries", [])
 
@@ -453,8 +513,13 @@ class GlossaryStore:
             term = entry.get("term", "")
             final = entry.get("final", "")
             term_type = entry.get("type", "")
+            selected_sense = entry.get("_selected_sense", "")
+            
             if final:
-                lines.append(f"- **{term}** → {final} ({term_type})")
+                sense_note = ""
+                if selected_sense:
+                    sense_note = f" [已选择义项: {selected_sense}]"
+                lines.append(f"- **{term}** → {final} ({term_type}){sense_note}")
 
         world_summary = self.glossary.get("world_summary")
         if world_summary:
