@@ -1,0 +1,10 @@
+本文件夹包含运行ID 20260108_202510_0fdc6d的关键测试结果文件
+
+完整文件位置：
+- 术语表: data/runs/20260108_202510_0fdc6d/glossary/glossary_v1.json
+- 运行日志: data/runs/20260108_202510_0fdc6d/logs/run.log
+- 最终翻译: data/runs/20260108_202510_0fdc6d/final/book_merged_zh.txt
+- 示例chunk: data/runs/20260108_202510_0fdc6d/chunks/1/1-001.json
+
+请查看README.md了解详细说明
+
