@@ -18,6 +18,11 @@ from workflow.checkpoint import (
     save_state,
 )
 
+try:
+    from glossary.store import GlossaryStore
+except ImportError:
+    GlossaryStore = None
+
 
 class WorkflowState(TypedDict, total=False):
     run_id: str
@@ -178,10 +183,15 @@ def _default_glossary_loader(
     dry_run: bool,
     glossary_path: Path,
 ) -> Dict[str, Any]:
+    """
+    Glossary加载器，支持冲突解决与版本化（C同学增强）
+    """
+    # 尝试加载现有glossary
+    store = None
     if glossary_path.exists():
-        return _normalize_glossary(
-            json.loads(glossary_path.read_text(encoding="utf-8"))
-        )
+        store = GlossaryStore(glossary_path) if GlossaryStore else None
+        if store:
+            return _normalize_glossary(store.glossary)
 
     project_glossary = (
         Path(__file__).resolve().parents[2]
@@ -189,14 +199,44 @@ def _default_glossary_loader(
         / "glossary"
         / "project_knowledge_base.json"
     )
-    if project_glossary.exists():
-        return _normalize_glossary(
-            json.loads(project_glossary.read_text(encoding="utf-8"))
-        )
+    if project_glossary.exists() and not store:
+        store = GlossaryStore(project_glossary) if GlossaryStore else None
+        if store:
+            return _normalize_glossary(store.glossary)
 
+    # 提取新术语
     term_module = _get_term_module()
-    glossary = term_module.extract_terms(chapters, dry_run=dry_run)
-    return _normalize_glossary(glossary)
+    raw_glossary = term_module.extract_terms(chapters, dry_run=dry_run)
+
+    # 如果GlossaryStore可用，使用它来处理冲突
+    if GlossaryStore and not dry_run:
+        if store is None:
+            store = GlossaryStore(glossary_path if glossary_path.exists() else project_glossary)
+        
+        # 将提取结果转换为store可以处理的格式
+        new_terms = []
+        for entry in raw_glossary.get("entries", []):
+            new_terms.append({
+                "term": entry.get("term", ""),
+                "type": entry.get("type", ""),
+                "candidates": [c.get("translation", "") if isinstance(c, dict) else c 
+                              for c in entry.get("candidates", [])],
+                "evidence_span": entry.get("evidence_span", ""),
+            })
+        
+        # 添加术语并处理冲突
+        conflict_report = store.add_terms(new_terms, use_llm_disambiguation=False)
+        
+        # 保存更新后的glossary（版本号会自动+1，文件名格式：glossary_v{version}.json）
+        saved_path = store.save(glossary_path)
+        
+        # 返回glossary和冲突报告（供node记录日志）
+        normalized_glossary = _normalize_glossary(store.glossary)
+        normalized_glossary["_conflict_report"] = conflict_report  # 临时存储，供node使用
+        return normalized_glossary
+    else:
+        # 降级到原有逻辑
+        return _normalize_glossary(raw_glossary)
 
 
 def _default_translator(
@@ -349,13 +389,39 @@ def load_or_extract_glossary_node(
 
     try:
         paths = init_run_dir(run_id)
-        glossary_path = paths["glossary"] / "glossary.json"
+        # 初始glossary路径（glossary_loader会处理版本化）
+        initial_glossary_path = paths["glossary"] / "glossary.json"
         dry_run = state.get("config", {}).get("dry_run", False)
 
-        glossary = glossary_loader(state.get("chapters", []), dry_run, glossary_path)
-        glossary_path.write_text(
-            json.dumps(glossary, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        glossary = glossary_loader(state.get("chapters", []), dry_run, initial_glossary_path)
+        
+        # 确定最终的glossary文件路径（GlossaryStore.save()会创建版本化文件名）
+        glossary_version = glossary.get("version", 1)
+        glossary_path = paths["glossary"] / f"glossary_v{glossary_version}.json"
+        
+        # 记录冲突解决报告到日志（C同学输出要求）
+        conflict_report = glossary.pop("_conflict_report", None)
+        if conflict_report:
+            if conflict_report.get("conflicts"):
+                conflicts_summary = f"处理了 {len(conflict_report['conflicts'])} 个术语冲突"
+                append_log(run_id, f"[glossary] {conflicts_summary}")
+                for conflict in conflict_report["conflicts"][:5]:  # 只记录前5个
+                    append_log(run_id, f"[glossary] 冲突: {conflict.get('term')} - {conflict.get('action')}")
+            if conflict_report.get("merged"):
+                append_log(run_id, f"[glossary] 合并了 {len(conflict_report['merged'])} 个术语")
+        
+        # 如果GlossaryStore已经保存了版本化文件，使用那个文件
+        # 否则手动保存（降级情况）
+        if not glossary_path.exists():
+            if initial_glossary_path.exists() and initial_glossary_path.stat().st_size > 0:
+                # GlossaryStore可能保存到了initial_glossary_path，检查并重命名
+                import shutil
+                shutil.move(str(initial_glossary_path), str(glossary_path))
+            else:
+                # 降级情况：手动保存
+                glossary_path.write_text(
+                    json.dumps(glossary, ensure_ascii=False, indent=2), encoding="utf-8"
+                )
 
         progress = dict(state.get("progress", {}))
         progress["load_or_extract_glossary"] = {
