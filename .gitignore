@@ -1,4 +1,4 @@
 .venv/
-data/runs/
+# data/runs/ 保留运行记录，不要删除
 __pycache__/
 *.pyc

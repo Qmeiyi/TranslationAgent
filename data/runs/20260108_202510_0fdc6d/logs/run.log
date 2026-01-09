@@ -1,0 +1,11 @@
+[2026-01-08 20:25:10] [main] new run run_id=20260108_202510_0fdc6d
+[2026-01-08 20:25:10] [load_text] start
+[2026-01-08 20:25:10] [load_text] end (0.00s) chapters=10 state=C:\Users\13249\Desktop\LLM大作业\TranslationAgent\data\runs\20260108_202510_0fdc6d\states\state_load_text.json
+[2026-01-08 20:25:10] [segment] start
+[2026-01-08 20:25:10] [segment] end (0.01s) chunks=10 state=C:\Users\13249\Desktop\LLM大作业\TranslationAgent\data\runs\20260108_202510_0fdc6d\states\state_segment.json
+[2026-01-08 20:25:10] [load_or_extract_glossary] start
+[2026-01-08 20:25:10] [load_or_extract_glossary] end (0.01s) entries=33 glossary=C:\Users\13249\Desktop\LLM大作业\TranslationAgent\data\runs\20260108_202510_0fdc6d\glossary\glossary_v1.json state=C:\Users\13249\Desktop\LLM大作业\TranslationAgent\data\runs\20260108_202510_0fdc6d\states\state_load_or_extract_glossary.json
+[2026-01-08 20:25:10] [translate_chunks] start
+[2026-01-08 22:09:05] [translate_chunks] end (6235.07s) translated=10 skipped=0 chunks_dir=C:\Users\13249\Desktop\LLM大作业\TranslationAgent\data\runs\20260108_202510_0fdc6d\chunks state=C:\Users\13249\Desktop\LLM大作业\TranslationAgent\data\runs\20260108_202510_0fdc6d\states\state_translate_chunks.json
+[2026-01-08 22:09:05] [merge_outputs] start
+[2026-01-08 22:09:05] [merge_outputs] end (0.05s) book=C:\Users\13249\Desktop\LLM大作业\TranslationAgent\data\runs\20260108_202510_0fdc6d\final\book_merged_zh.txt chapters_dir=C:\Users\13249\Desktop\LLM大作业\TranslationAgent\data\runs\20260108_202510_0fdc6d\final\chapters state=C:\Users\13249\Desktop\LLM大作业\TranslationAgent\data\runs\20260108_202510_0fdc6d\states\state_merge_outputs.json

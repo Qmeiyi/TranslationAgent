@@ -1,0 +1,502 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "term": "克莱恩·莫雷蒂",
+      "type": "NE:person",
+      "final": "Klein Moretti",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Klein Moretti",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "本书主角，霍伊大学历史系毕业生，居住在廷根市。"
+    },
+    {
+      "term": "周明瑞",
+      "type": "NE:person",
+      "final": "Zhou Mingrui",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Zhou Mingrui",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "主角穿越前的真实身份，来自地球。"
+    },
+    {
+      "term": "梅丽莎",
+      "type": "NE:person",
+      "final": "Melissa",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Melissa",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "克莱恩的妹妹，擅长机械。"
+    },
+    {
+      "term": "班森",
+      "type": "NE:person",
+      "final": "Benson",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Benson",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "克莱恩的哥哥，在进出口公司工作。"
+    },
+    {
+      "term": "奥黛丽·霍尔",
+      "type": "NE:person",
+      "final": "Audrey Hall",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Audrey Hall",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "贝克兰德的贵族小姐，塔罗会成员。"
+    },
+    {
+      "term": "阿尔杰·威尔逊",
+      "type": "NE:person",
+      "final": "Alger Wilson",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Alger Wilson",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "风暴教会相关人员，航海者，塔罗会成员。"
+    },
+    {
+      "term": "愚者",
+      "type": "NE:identity",
+      "final": "The Fool",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "The Fool",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "克莱恩在塔罗会上的代号，灰雾的主宰。"
+    },
+    {
+      "term": "正义",
+      "type": "NE:identity",
+      "final": "Justice",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Justice",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "奥黛丽在塔罗会上的代号。"
+    },
+    {
+      "term": "倒吊人",
+      "type": "NE:identity",
+      "final": "The Hanged Man",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "The Hanged Man",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "阿尔杰在塔罗会上的代号。"
+    },
+    {
+      "term": "非凡者",
+      "type": "domain_term",
+      "final": "Beyonder",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Beyonder",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "服用魔药获得超自然力量的人。"
+    },
+    {
+      "term": "魔药",
+      "type": "domain_term",
+      "final": "Potion",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Potion",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "赋予人非凡能力的神秘药剂。"
+    },
+    {
+      "term": "序列",
+      "type": "domain_term",
+      "final": "Sequence",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Sequence",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "非凡能力的等级划分（9为最低）。"
+    },
+    {
+      "term": "途径",
+      "type": "domain_term",
+      "final": "Pathway",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Pathway",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "非凡能力的职业发展路线。"
+    },
+    {
+      "term": "封印物",
+      "type": "domain_term",
+      "final": "Sealed Artifact",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Sealed Artifact",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "具有危险副作用的神奇物品。"
+    },
+    {
+      "term": "廷根市",
+      "type": "NE:location",
+      "final": "Tingen City",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Tingen City",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "故事开始的城市，有大学。"
+    },
+    {
+      "term": "鲁恩王国",
+      "type": "NE:location",
+      "final": "Loen Kingdom",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Loen Kingdom",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "北大陆强国之一，原型为维多利亚时代的英国。"
+    },
+    {
+      "term": "贝克兰德",
+      "type": "NE:location",
+      "final": "Backlund",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Backlund",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "鲁恩王国的首都，万都之都。"
+    },
+    {
+      "term": "阿霍瓦郡",
+      "type": "NE:location",
+      "final": "Awwa County",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Awwa County",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "廷根市所在的郡。"
+    },
+    {
+      "term": "霍伊大学",
+      "type": "NE:org",
+      "final": "Khoy University",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Khoy University",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "克莱恩毕业的大学。"
+    },
+    {
+      "term": "黑夜女神",
+      "type": "NE:deity",
+      "final": "The Evernight Goddess",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "The Evernight Goddess",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "鲁恩王国主要信仰的神灵之一。"
+    },
+    {
+      "term": "风暴之主",
+      "type": "NE:deity",
+      "final": "The Lord of Storms",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "The Lord of Storms",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "鲁恩王国主要信仰的神灵之一。"
+    },
+    {
+      "term": "蒸汽与机械之神",
+      "type": "NE:deity",
+      "final": "The God of Steam and Machinery",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "The God of Steam and Machinery",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "鲁恩王国主要信仰的神灵之一。"
+    },
+    {
+      "term": "值夜者",
+      "type": "NE:org",
+      "final": "Nighthawks",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Nighthawks",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "黑夜女神教会的非凡者小队。"
+    },
+    {
+      "term": "代罚者",
+      "type": "NE:org",
+      "final": "Mandated Punishers",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Mandated Punishers",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "风暴之主教会的非凡者小队。"
+    },
+    {
+      "term": "机械之心",
+      "type": "NE:org",
+      "final": "Machinery Hivemind",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Machinery Hivemind",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "蒸汽教会的非凡者小队。"
+    },
+    {
+      "term": "密修会",
+      "type": "NE:org",
+      "final": "Secret Order",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Secret Order",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "一个神秘的古老组织，涉及占卜家途径。"
+    },
+    {
+      "term": "赫密斯文",
+      "type": "NE:language",
+      "final": "Hermes",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Hermes",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "具有神秘力量的古代文字。"
+    },
+    {
+      "term": "古弗萨克语",
+      "type": "NE:language",
+      "final": "Ancient Feysac",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Ancient Feysac",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "北大陆通用语的源头。"
+    },
+    {
+      "term": "金镑",
+      "type": "domain_term",
+      "final": "Gold Pound",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Gold Pound",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "最大面额货币，1金镑=20苏勒。"
+    },
+    {
+      "term": "苏勒",
+      "type": "domain_term",
+      "final": "Soli",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Soli",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "中等面额货币，1苏勒=12便士。"
+    },
+    {
+      "term": "便士",
+      "type": "domain_term",
+      "final": "Penny",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Penny",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "最小面额货币。"
+    },
+    {
+      "term": "绯红",
+      "type": "domain_term",
+      "final": "Crimson",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Crimson",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "红月的颜色，象征女神或危险。"
+    },
+    {
+      "term": "罗塞尔·古斯塔夫",
+      "type": "NE:person",
+      "final": "Roselle Gustav",
+      "aliases": [],
+      "senses": [],
+      "candidates": [
+        {
+          "translation": "Roselle Gustav",
+          "score": 1.0,
+          "source": "legacy"
+        }
+      ],
+      "evidence_span": "穿越者前辈，大帝。"
+    }
+  ],
+  "world_summary": "《诡秘之主》前10章讲述了主角周明瑞穿越到维多利亚风格的异世界，附身于刚自杀的历史系学生克莱恩·莫雷蒂身上。这是一个蒸汽与神学并存的世界，他通过神秘的"灰雾"空间建立了塔罗会，并接触到了"非凡者"和"魔药"体系。故事基调神秘、压抑且充满未知的恐惧。"
+}
+
